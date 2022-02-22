@@ -1,130 +1,66 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
-        classpath 'org.parchmentmc:librarian:1.+'
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
+plugins {
+	id 'fabric-loom' version '0.10-SNAPSHOT'
+	id 'maven-publish'
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'org.spongepowered.mixin'
-apply plugin: 'maven-publish'
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
-version = "0.2.2"
-group= "dev.gigaherz.jsonthings" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "JsonThings-UNKNOWN"
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
 
-project.afterEvaluate {
-    archivesBaseName = "JsonThings-${project.MC_VERSION}"
+loom {
+	accessWidenerPath = file("src/main/resources/jsonthings.accesswidener")
 }
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 repositories {
-    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+
 }
 
-mixin {
-    add sourceSets.main, "jsonthings.refmap.json"
-}
-
-minecraft {
-    mappings channel: 'official', version: '1.18'
-    //mappings channel: 'parchment', version: '2021.08.29-1.17.1'
-
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-
-    runs {
-        client {
-            workingDirectory project.file('run')
-
-            property 'forge.logging.markers', ''
-            property 'forge.logging.console.level', 'debug'
-
-            arg "--mixin=jsonthings.mixins.json"
-
-            ideaModule "${project.name}.main"
-
-            mods {
-                thismod {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        server {
-            workingDirectory project.file('run')
-
-            property 'forge.logging.markers', ''
-            property 'forge.logging.console.level', 'debug'
-
-            arg "--mixin=jsonthings.mixins.json"
-
-            ideaModule "${project.name}.main"
-
-            mods {
-                thismod {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        data {
-            workingDirectory project.file('run')
-
-            property 'forge.logging.markers', ''
-            property 'forge.logging.console.level', 'debug'
-
-            args '--mod', 'jsonthings', '--all', '--output', file('src/main/generated_resources/'), '--existing', file('src/main/resources/')
-
-            mods {
-                thismod {
-                    source sourceSets.main
-                }
-            }
-        }
-    }
-}
-
-/*configurations {
-    library
-    implementation.extendsFrom library
-}
-minecraft.runs.all {
-    lazyToken('minecraft_classpath') {
-        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-    }
-}*/
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18-38.0.10'
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    //library 'com.google.guava:guava:21.0'
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
 
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = "UTF-8"
+	it.options.release = 17
+}
+
+java {
+	withSourcesJar()
 }
 
 jar {
-    from('/') {
-        include 'LICENSE.txt'
-    }
+	from("LICENSE") {
+		rename { "${it}_${project.archivesBaseName}"}
+	}
+}
 
-    manifest {
-        attributes([
-                "Specification-Title": "eyes",
-                "Specification-Vendor": "gigaherz",
-                "Specification-Version": "1", // We are version 1 of ourselves
-                "Implementation-Title": project.name,
-                "Implementation-Version": "${version}",
-                "Implementation-Vendor" :"gigaherz",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs": "jsonthings.mixins.json"
-        ])
-    }
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			artifact(remapJar) {
+				builtBy remapJar
+			}
+			artifact(sourcesJar) {
+				builtBy remapSourcesJar
+			}
+		}
+	}
+
+	repositories {
+	}
 }
