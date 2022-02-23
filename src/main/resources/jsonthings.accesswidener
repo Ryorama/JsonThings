@@ -1,4 +1,9 @@
 accessWidener	v1	named
 
-accessible method 
+accessible method net/minecraft/block/Material$Builder lightPassesThrough ()Lnet/minecraft/block/Material$Builder;
+accessible method net/minecraft/block/Material$Builder destroyedByPiston ()Lnet/minecraft/block/Material$Builder;
+accessible method net/minecraft/block/Material$Builder blocksPistons ()Lnet/minecraft/block/Material$Builder;
+
+accessible field net/minecraft/block/Material$Builder burnable Z
+accessible field net/minecraft/block/MapColor COLORS [Lnet/minecraft/block/MapColor;
 
